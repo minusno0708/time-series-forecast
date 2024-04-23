@@ -1,7 +1,9 @@
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
 data_dir = "dataset/"
 seq_len = 96
+scaler = StandardScaler()
 
 def data_loader(file):
     # csv読み込み
@@ -14,15 +16,21 @@ def data_loader(file):
 
     df_raw = df_raw[['date'] + cols + ["OT"]]
 
+    # データを分割
     num_train = int(len(df_raw) * 0.7)
     num_test = int(len(df_raw) * 0.2)
     num_vali = len(df_raw) - num_train - num_test
 
     cols_data = df_raw.columns[1:]
     df_data = df_raw[cols_data]
+
+    # データの正規化
+    train_data = df_data[:num_train]
+    scaler.fit(train_data)
+    data = scaler.transform(df_data.values)
     
-    data_x = df_data[:num_train]
-    data_y = df_data[:num_train]
+    data_x = data[:num_train]
+    data_y = data[:num_train]
 
     return data_x, data_y
 
