@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader
 
 data_dir = "dataset/"
 
@@ -36,9 +37,18 @@ class Dataset:
         self.data_x = data[:num_train]
         self.data_y = data[:num_train]
 
+    def __getitem__(self, index):
+        seq_x = self.data_x[index:index+self.seq_len]
+        seq_y = self.data_y[index+self.seq_len]
+        return seq_x, seq_y
+    
+    def __len__(self):
+        return len(self.data_x) - self.seq_len
+
 
 if __name__ == "__main__":
     dataset = Dataset("exchange_rate.csv")
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
     print(dataset.data_x.shape)
     print(dataset.data_y.shape)
    
