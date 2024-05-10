@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 
@@ -33,22 +34,41 @@ class Dataset:
         train_data = df_data[:num_train]
         self.scaler.fit(train_data)
         data = self.scaler.transform(df_data.values)
+
+        # data_stampの作成
+        df_stamp = df_raw[["date"]][:num_train]
+        df_stamp['date'] = pd.to_datetime(df_stamp.date)
+        data_stamp = time_features(pd.to_datetime(df_stamp["date"].values))
         
         self.data_x = data[:num_train]
         self.data_y = data[:num_train]
+        self.data_stamp = data_stamp
 
     def __getitem__(self, index):
         seq_x = self.data_x[index:index+self.seq_len]
         seq_y = self.data_y[index+self.seq_len]
-        return seq_x, seq_y
+        seq_x_mark = self.data_stamp[index:index+self.seq_len]
+        seq_y_mark = self.data_stamp[index+self.seq_len]
+        return seq_x, seq_y, seq_x_mark, seq_y_mark
     
     def __len__(self):
         return len(self.data_x) - self.seq_len
+    
+def time_features(dates):
+    features = []
+    for index in dates:
+        features.append([
+            index.hour / 23.0 - 0.5,
+            index.dayofweek / 6.0 - 0.5,
+            (index.day - 1) / 30.0 - 0.5,
+            (index.dayofyear - 1) / 365.0 - 0.5
+            ])
+
+    return np.array(features)
 
 
 if __name__ == "__main__":
     dataset = Dataset("exchange_rate.csv")
     dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
-    print(dataset.data_x.shape)
-    print(dataset.data_y.shape)
+    
    
